@@ -1,3 +1,5 @@
+import java.io._
+
 object ClacGaps {
 
   val src = List(
@@ -16,6 +18,8 @@ object ClacGaps {
   );
 
   val SamplingRate = 48 * 1000.0;
+  val BitsPerSample = 24;
+  val NumChannels = 2;
 
 
   def sec(time: String): Double = {
@@ -34,19 +38,31 @@ object ClacGaps {
     SamplingRate * time
   }
 
-  def showDiffs() {
+  def createRawPCM(title: String, count: Int) {
+    printf("count: %d%n", count)
+    val totalBytes = count * BitsPerSample/8 * NumChannels;
+    val filename = title + ".tail-pad.pcm"
+    val file = new BufferedOutputStream(new FileOutputStream(filename))
+    file.write((1 to totalBytes) map { x => 0.byteValue } toArray)
+    file.close
+  }
+
+  def calcDiffs() {
     val videoLenList = src map { _("video") } map sec
     val audioLenList = src map { _("audio") } map sec
     val diffList = videoLenList zip(audioLenList) map { t => t._1 - t._2 }
     val samplesList = diffList map numSamples
     src map { _("title") } zip diffList zip samplesList foreach { x =>
+      val count = x._2.toInt
+      val title: String = x._1._1
       printf("title: %s, diff: %.6f, count: %.1f%n",
-             x._1._1, x._1._2, x._2)
+             title, x._1._2, x._2)
+      createRawPCM(title, count)
     }
   }
 
   def main(args: Array[String]): Unit = {
     showTotalTime()
-    showDiffs()
+    calcDiffs()
   }
 }
