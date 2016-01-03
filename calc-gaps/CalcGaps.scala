@@ -41,7 +41,8 @@ object ClacGaps {
   def createRawPCM(title: String, count: Int) {
     printf("count: %d%n", count)
     val totalBytes = count * BitsPerSample/8 * NumChannels;
-    val filename = title + ".tail-pad.pcm"
+    val filename = title + ".tail-pad." + SamplingRate.toInt +
+                   "hz_" + BitsPerSample + "bit_" + NumChannels + "ch.pcm"
     val file = new BufferedOutputStream(new FileOutputStream(filename))
     file.write((1 to totalBytes) map { x => 0.byteValue } toArray)
     file.close
