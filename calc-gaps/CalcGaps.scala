@@ -23,13 +23,13 @@ object ClacGaps {
 
 
   def sec(time: String): Double = {
-    time split(":") zip(List(3600, 60, 1)) map {
-      t => t._1.toDouble * t._2 } sum
+    (time split(":") zip(List(3600, 60, 1)) map {
+      t: (String, Int) => t._1.toDouble * t._2 }).sum
   }
 
   def showTotalTime() {
-    val videoLen = (src map { _("video") } map sec sum)
-    val audioLen = (src map { _("audio") } map sec sum)
+    val videoLen = (src map { _("video") } map sec).sum
+    val audioLen = (src map { _("audio") } map sec).sum
     printf("Total: video: %.6f, audio: %.6f, diff: %.6f (sec)%n",
            videoLen, audioLen, (videoLen - audioLen))
   }
@@ -39,16 +39,16 @@ object ClacGaps {
   }
 
   def createRawPCM(title: String, count: Int) {
-    printf("count: %d%n", count)
     val totalBytes = count * BitsPerSample/8 * NumChannels;
     val filename = title + ".tail-pad." + SamplingRate.toInt +
                    "hz_" + BitsPerSample + "bit_" + NumChannels + "ch.pcm"
     val file = new BufferedOutputStream(new FileOutputStream(filename))
     file.write((1 to totalBytes) map { x => 0.byteValue } toArray)
     file.close
+    printf("Created: %s, count: %d%n", filename, count)
   }
 
-  def calcDiffs() {
+  def calcDiffs(generatePaddingFile: Boolean) {
     val videoLenList = src map { _("video") } map sec
     val audioLenList = src map { _("audio") } map sec
     val diffList = videoLenList zip(audioLenList) map { t => t._1 - t._2 }
@@ -58,12 +58,22 @@ object ClacGaps {
       val title: String = x._1._1
       printf("title: %s, diff: %.6f, count: %.1f%n",
              title, x._1._2, x._2)
-      createRawPCM(title, count)
+      if (generatePaddingFile)
+        createRawPCM(title, count)
     }
   }
 
+  def showHelp() {
+    println("Usage:")
+    println("  -g generate raw pcm file for padding")
+  }
+
   def main(args: Array[String]): Unit = {
+    if (args contains("-h")) {
+      showHelp()
+      return
+    }
     showTotalTime()
-    calcDiffs()
+    calcDiffs(args contains("-g"))
   }
 }
