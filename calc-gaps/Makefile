@@ -8,3 +8,7 @@ all: \
 
 %.wav: %.pcm
 	avconv -y -f s24le -ac 2 -ar 48k -i $< -acodec pcm_s24le $@
+
+.PHONY: clean
+clean:
+	rm -fr *.wav *.pcm
